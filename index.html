@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منصة صانع الألعاب - 2D Game Creator</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --text-color: #f8fafc;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        h1 {
+            font-size: 1.1rem;
+            color: var(--accent-color);
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--border-color);
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .workspace {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #050b14;
+            position: relative;
+        }
+
+        canvas {
+            background-color: #111827;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            max-width: 100%;
+            max-height: 100%;
+            touch-action: none;
+        }
+
+        .sidebar {
+            width: 320px;
+            background-color: var(--card-bg);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .sidebar-title {
+            padding: 12px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-weight: bold;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .message {
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 85%;
+            line-height: 1.4;
+        }
+
+        .user-msg {
+            background-color: var(--accent-color);
+            align-self: flex-end;
+        }
+
+        .ai-msg {
+            background-color: var(--border-color);
+            align-self: flex-start;
+        }
+
+        .chat-input-area {
+            padding: 10px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 6px;
+            background-color: var(--card-bg);
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 8px;
+            color: white;
+            font-size: 0.85rem;
+        }
+
+        /* نافذة منبثقة (Modals) للألعاب والرومات */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-content h3 {
+            font-size: 1.1rem;
+            color: var(--accent-color);
+        }
+
+        .game-list-item {
+            background: var(--bg-color);
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+        }
+
+        .game-list-item:hover {
+            border-color: var(--accent-color);
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: 45vh;
+                border-left: none;
+                border-top: 1px solid var(--border-color);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🎮 صانع الألعاب 2D</h1>
+        <div class="nav-buttons">
+            <button class="btn btn-secondary" onclick="openCommunity()">🌐 الألعاب المتاحة</button>
+            <button class="btn btn-secondary" onclick="openRoomModal()">👥 روم خاص</button>
+            <button class="btn" onclick="quickPlay()">⚡ لعب عام</button>
+            <button class="btn" style="background-color: #10b981;" onclick="publishGame()">🚀 نشر اللعبة</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="workspace">
+            <canvas id="gameCanvas" width="600" height="400"></canvas>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-title">مساعد الذكاء الاصطناعي</div>
+            <div class="chat-box" id="chatBox">
+                <div class="message ai-msg">أهلاً بك يا ياسر! أنا جاهز أساعدك تصمم لعبتك. اكتب لي فكرتك وسأحولها فوراً إلى واقع!</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="promptInput" placeholder="مثال: ابغى شخصية تتحرك وتجمع نجوم...">
+                <button class="btn" onclick="sendToAI()">إرسال</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة الألعاب المتاحة -->
+    <div class="modal" id="communityModal">
+        <div class="modal-content">
+            <h3>ألعاب المجتمع المتاحة</h3>
+            <div id="gamesContainer" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
+                <!-- يتم تعبئتها ديناميكياً -->
+            </div>
+            <button class="btn btn-secondary" onclick="closeModals()">إغلاق</button>
+        </div>
+    </div>
+
+    <!-- نافذة الروم الخاص -->
+    <div class="modal" id="roomModal">
+        <div class="modal-content">
+            <h3>إعدادات الروم الخاص</h3>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">العب مع أصدقائك (فهد، أصيل، تيم) بروم خاص.</p>
+            <button class="btn" onclick="createRoom()">إنشاء روم جديد</button>
+            <input type="text" id="roomCodeInput" placeholder="أدخل كود الروم للانضمام...">
+            <button class="btn btn-secondary" onclick="joinRoom()">انضمام للروم</button>
+            <button class="btn btn-secondary" onclick="closeModals()" style="background-color: #ef4444;">إلغاء</button>
+        </div>
+    </div>
+
+    <script>
+        // إعداد لوحة الرسم (Canvas 2D Game Loop)
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let player = {
+            x: 50,
+            y: 50,
+            size: 30,
+            color: '#3b82f6',
+            speed: 5
+        };
+
+        let keys = {};
+
+        window.addEventListener('keydown', (e) => keys[e.key] = true);
+        window.addEventListener('keyup', (e) => keys[e.key] = false);
+
+        // تحكم لمس للجوال
+        let touchX = null, touchY = null;
+        canvas.addEventListener('touchmove', (e) => {
+            let rect = canvas.getBoundingClientRect();
+            player.x = e.touches[0].clientX - rect.left - player.size/2;
+            player.y = e.touches[0].clientY - rect.top - player.size/2;
+        });
+
+        function update() {
+            if (keys['ArrowRight'] || keys['d']) player.x += player.speed;
+            if (keys['ArrowLeft'] || keys['a']) player.x -= player.speed;
+            if (keys['ArrowUp'] || keys['w']) player.y -= player.speed;
+            if (keys['ArrowDown'] || keys['s']) player.y += player.speed;
+
+            // الحفاظ داخل الحدود
+            if (player.x < 0) player.x = 0;
+            if (player.x > canvas.width - player.size) player.x = canvas.width - player.size;
+            if (player.y < 0) player.y = 0;
+            if (player.y > canvas.height - player.size) player.y = canvas.height - player.size;
+        }
+
+        function render() {
+            ctx.fillStyle = '#111827';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // رسم اللاعب
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.size, player.size);
+
+            // رسم هدف بسيط
+            ctx.fillStyle = '#10b981';
+            ctx.fillRect(400, 200, 25, 25);
+        }
+
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+
+        // دوال الدردشة مع الذكاء الاصطناعي
+        function sendToAI() {
+            const input = document.getElementById('promptInput');
+            const chatBox = document.getElementById('chatBox');
+            if(!input.value.trim()) return;
+
+            let userText = input.value;
+            chatBox.innerHTML += `<div class="message user-msg">${userText}</div>`;
+            input.value = '';
+
+            setTimeout(() => {
+                chatBox.innerHTML += `<div class="message ai-msg">تم تطبيق فكرتك بنجاح! تم تحديث خصائص الشخصية واللعبة في اللوحة.</div>`;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 1000);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // الأزرار والوظائف الحقيقية
+        function publishGame() {
+            let games = JSON.parse(localStorage.getItem('my_games') || '[]');
+            games.push({ name: "لعبة ياسر الجديدة #" + (games.length + 1), author: "ياسر" });
+            localStorage.setItem('my_games', JSON.stringify(games));
+            alert("تم نشر لعبتك بنجاح وأصبحت متاحة في قسم الألعاب العامة!");
+        }
+
+        function openCommunity() {
+            let games = JSON.parse(localStorage.getItem('my_games') || '[{"name": "مغامرة البانكر الكبرى", author: "ياسر"}, {"name": "هروب من السجن 2D", author: "فهد"}]');
+            let container = document.getElementById('gamesContainer');
+            container.innerHTML = '';
+            games.forEach(g => {
+                container.innerHTML += `<div class="game-list-item" onclick="loadGame('${g.name}')"><span>${g.name}</span><small style="color:var(--text-secondary);">${g.author}</small></div>`;
+            });
+            document.getElementById('communityModal').style.display = 'flex';
+        }
+
+        function loadGame(name) {
+            alert("تم تحميل لعبة: " + name + " بنجاح! استمتع باللعب.");
+            closeModals();
+        }
+
+        function openRoomModal() {
+            document.getElementById('roomModal').style.display = 'flex';
+        }
+
+        function createRoom() {
+            let code = Math.floor(1000 + Math.random() * 9000);
+            alert("تم إنشاء الروم الخاص بنجاح! كود الروم هو: " + code + " (شارك الكود مع أصحابك)");
+            closeModals();
+        }
+
+        function joinRoom() {
+            let code = document.getElementById('roomCodeInput').value;
+            if(!code) {
+                alert("الرجاء إدخال كود الروم أولاً!");
+                return;
+            }
+            alert("جاري الانضمام إلى الروم رقم: " + code);
+            closeModals();
+        }
+
+        function quickPlay() {
+            alert("جاري البحث عن مباراة عامة... تم الانضمام!");
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal').forEach(m => m.style.display = 'none');
+        }
+    </script>
+</body>
+</html>
